@@ -134,6 +134,7 @@ function BulkFill:onUpdate(dt, isActiveForInput, isSelected)
 		
 		if #spec.fillTrigger.triggers == 0 then
 			--print("NO TRIGGERS AVAILABLE")
+			bf.selectedIndex = 1
 			g_inputBinding:setActionEventTextVisibility(bf.cycleFwActionEventId, false)
 			g_inputBinding:setActionEventTextVisibility(bf.cycleBwActionEventId, false)
 			g_inputBinding:setActionEventActive(bf.cycleFwActionEventId, false)
@@ -214,6 +215,12 @@ function BulkFill:onUpdate(dt, isActiveForInput, isSelected)
 						end
 					end
 				end
+			else
+				bf.selectedIndex = 1
+				g_inputBinding:setActionEventTextVisibility(bf.cycleFwActionEventId, false)
+				g_inputBinding:setActionEventTextVisibility(bf.cycleBwActionEventId, false)
+				g_inputBinding:setActionEventActive(bf.cycleFwActionEventId, false)
+				g_inputBinding:setActionEventActive(bf.cycleBwActionEventId, false)
 			end
 		end
 	end
@@ -321,9 +328,8 @@ end
 function BulkFill:changeFillOrder(noEventSend)
 	local newIndex = self.spec_bulkFill.selectedIndex
 	local spec = self.spec_fillUnit
-	local temp = spec.fillTrigger.triggers[1]
-	spec.fillTrigger.triggers[1] = spec.fillTrigger.triggers[newIndex]
-	spec.fillTrigger.triggers[newIndex] = temp
+	table.insert(spec.fillTrigger.triggers, 1, spec.fillTrigger.triggers[newIndex])
+	table.remove(spec.fillTrigger.triggers, newIndex+1)
 	spec.fillTrigger.currentTrigger = spec.fillTrigger.triggers[1]
 	self.spec_bulkFill.selectedIndex = 1
 	
@@ -339,7 +345,7 @@ function BulkFill:changeFillOrder(noEventSend)
 end
 	
 function BulkFill:RemoveTriggerFromList(noEventSend)
-	--print("REMOVE FROM LIST: "..tostring(self.spec_fillUnit.fillTrigger.triggers[1].sourceObject.id))					
+	--print("REMOVE FROM LIST: "..tostring(self.spec_fillUnit.fillTrigger.triggers[1].sourceObject.id))
 	table.remove(self.spec_fillUnit.fillTrigger.triggers, 1)
 	self.spec_bulkFill.selectedIndex = 1
 	
