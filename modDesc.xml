@@ -6,6 +6,7 @@
         <en>Bulk Fill</en>
         <de>Schüttgutbefüllung</de>
         <fr>Remplissage En Vrac</fr>
+		<ru>Массовое заполнение</ru>
     </title>
     <description>
 <en><![CDATA[Any refillable tools (seeders, sprayers or trailers) can now 'Bulk Fill' from multiple pallets or big-bags using only a single fill command, as long as there is another matching fill unit in range.
@@ -38,6 +39,16 @@ Caractéristiques:
 - Il est également possible de sélectionner le premier élément à partir duquel il faut commencer à remplir
 ]]>
 </fr>
+<ru><![CDATA[Любые перезаправляемые инструменты (сеялки, опрыскиватели или прицепы) теперь могут 'Массово заполнятся' с нескольких поддонов или биг-бегов, используя команду заполнения только один раз, если в диапазоне есть другая соответствующая заполняющая единица.
+
+Особенности:
+- 'Массовое заполнение' позволяет осуществлять непрерывное наполнение с нескольких поддонов или биг-бегов
+- Эту возможность можно вкл/откл с помощью клавиши 'Insert', если вам нужно загрузить только один поддон
+- Включенное состояние сохраняется независимо для каждого инструмента при сохранении игры
+- Отображаются уровни заполнения и порядок доступных источников заполнения
+- Также можно выбрать первый элемент, с которого начинать заполнение
+]]>
+</ru>
     </description>
 	
 	<multiplayer supported="true" />
@@ -72,53 +83,63 @@ Caractéristiques:
 			<en>Bulk Fill: Toggle Enabled/Disabled</en>
 			<de>Schüttgutbefüllung: Umschalten Aktiviert/Deaktiviert</de>
 			<fr>Remplissage En Vrac: Activation/Désactivation Du Basculement</fr>
+			<ru>Массовое заполнение: вкл/откл</ru>
 		</text>
 		<text name="action_BULK_FILL_ENABLED">
 			<en>Toggle Bulk Fill (Enabled)</en>
 			<de>Schüttgutfüllung Umschalten (Aktiviert)</de>
 			<fr>Basculer Le Remplissage En Vrac (Activé)</fr>
+			<ru>Массовое заполнение (включено)</ru>
 		</text>
 		<text name="action_BULK_FILL_DISABLED">
 			<en>Toggle Bulk Fill (Disabled)</en>
 			<de>Schüttgutfüllung Umschalten (Deaktiviert)</de>
 			<fr>Basculer Le Remplissage En Vrac (Handicapé)</fr>
+			<ru>Массовое заполнение (отключено)</ru>
 		</text>
 		
 		<text name="input_TOGGLE_FILL_SELECT">
 			<en>Bulk Fill: Select Items (Enabled/Disabled)</en>
 			<de>Schüttgutbefüllung: Elemente auswählen (Aktiviert/Deaktiviert)</de>
 			<fr>Remplissage En Vrac: Sélectionner Les Éléments (Activés/Désactivés)</fr>
+			<ru>Массовое заполнение: Выбор элемента заполнения (вкл/откл)</ru>
 		</text>
 		<text name="action_FILL_SELECT_ENABLED">
 			<en>Toggle Select Fill Item (Enabled)</en>
 			<de>Umschalten Füllelement Auswählen (Aktiviert)</de>
 			<fr>Basculer L'élément De Remplissage (Activé)</fr>
+			<ru>Выбор элемента заполнения (включено)</ru>
 		</text>
 		<text name="action_FILL_SELECT_DISABLED">
 			<en>Toggle Select Fill Item (Disabled)</en>
 			<de>Umschalten Füllelement Auswählen (Deaktiviert)</de>
 			<fr>Basculer L'Élément De Remplissage (Désactivé)</fr>
+			<ru>Выбор элемента заполнения (отключено)</ru>
 		</text>
 		
 		<text name="input_BULK_FILL_CYCLE_FW">
 			<en>Bulk Fill: Cycle Next Item</en>
 			<de>Schüttgutbefüllung: Zyklus Nächstes Element</de>
 			<fr>Remplissage En Vrac: Cycle Point Suivant</fr>
+			<ru>Массовое заполнение: Циклично следующий элемент</ru>
 		</text>
 		<text name="input_BULK_FILL_CYCLE_BW">
 			<en>Bulk Fill: Cycle Previous Item</en>
 			<de>Schüttgutbefüllung: Zyklus Vorheriges Element</de>
 			<fr>Remplissage En Vrac: Cycle Point Précédent</fr>
+			<ru>Массовое заполнение: Циклично предыдущий элемент</ru>
 		</text>
 		<text name="action_BULK_FILL_CYCLE_FW">
 			<en>Cycle Next Item</en>
 			<de>Zyklus Nächstes Element</de>
 			<fr>Cycle Point Suivant</fr>
+			<ru>Циклично следующий элемент</ru>
 		</text>
 		<text name="action_BULK_FILL_CYCLE_BW">
 			<en>Cycle Previous Item</en>
 			<de>Zyklus Vorheriges Element</de>
 			<fr>Cycle Point Précédent</fr>
+			<ru>Циклично предыдущий элемент</ru>
 		</text>
 		
 	</l10n>
