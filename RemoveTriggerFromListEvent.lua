@@ -7,9 +7,10 @@ function RemoveTriggerFromListEvent:emptyNew()
 	return self
 end
 
-function RemoveTriggerFromListEvent:new(object)
+function RemoveTriggerFromListEvent:new(object, index)
 	local self = RemoveTriggerFromListEvent:emptyNew()
 	self.object = object
+	self.index = index
 	return self
 end
 
@@ -26,9 +27,9 @@ end
 function RemoveTriggerFromListEvent:run(connection)
 	if not connection:getIsServer() then
 		--print("RemoveTriggerFromListEvent: server")
-		self.object:removeTriggerFromList(true)
+		self.object:removeTriggerFromList(index, true)
 	else
 		--print("RemoveTriggerFromListEvent: client")
-		self.object:removeTriggerFromList(true)
+		self.object:removeTriggerFromList(index, true)
 	end
 end
