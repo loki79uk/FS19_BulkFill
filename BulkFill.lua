@@ -132,6 +132,13 @@ function BulkFill:onUpdate(dt, isActiveForInput, isSelected)
 		local bf = self.spec_bulkFill
 		local spec = self.spec_fillUnit
 		
+		-- I cannot find where this happens: when a container stops filling due to becoming full
+		if self.spec_bulkFill.isFilling ~= self.spec_fillUnit.fillTrigger.isFilling then
+			--print("isFilling was changed without us knowing..")
+			self.spec_bulkFill.isFilling = self.spec_fillUnit.fillTrigger.isFilling
+			bf.lastNumberTriggers = 0 -- change this to trigger 'MULTIPLE FILL TYPES AVAILABLE'
+		end
+		
 		if #spec.fillTrigger.triggers == 0 then
 			--print("NO TRIGGERS AVAILABLE")
 			bf.selectedIndex = 1
@@ -149,18 +156,32 @@ function BulkFill:onUpdate(dt, isActiveForInput, isSelected)
 			--print("TRIGGERS AVAILABLE")
 			bf.selectedIndex = MathUtil.clamp(bf.selectedIndex, 1, #spec.fillTrigger.triggers)
 			
-			if #spec.fillUnits>1 and self.spec_cover~=nil and
-			   (bf.lastCoverOpen~=self.spec_cover.state or
-				bf.lastNumberTriggers~=#spec.fillTrigger.triggers)
+			if bf.isSelectEnabled and #spec.fillUnits>1 and self.spec_cover~=nil and
+			   (bf.lastCoverOpen ~= self.spec_cover.state or
+				bf.lastSelectedIndex ~= bf.selectedIndex or
+				bf.lastNumberTriggers ~=# spec.fillTrigger.triggers)
 			then
-				--print("MULTIPLE FILL TYPES")
+				--print("MULTIPLE FILL TYPES AVAILABLE")
 				bf.lastCoverOpen = self.spec_cover.state
+				bf.lastSelectedIndex = bf.selectedIndex
 				bf.lastNumberTriggers = #spec.fillTrigger.triggers
 				
 				openCoverFillType = 0
 				if self.spec_cover.state ~= 0 then
 					local openCoverFillIndex = self.spec_cover.covers[self.spec_cover.state].fillUnitIndices[1]
-					openCoverFillType = next(spec.fillUnits[openCoverFillIndex].supportedFillTypes)
+					if spec.fillUnits[openCoverFillIndex].fillLevel < spec.fillUnits[openCoverFillIndex].capacity then
+						openCoverFillType = next(spec.fillUnits[openCoverFillIndex].supportedFillTypes)
+					else
+						--print("TEST NEXT STATE")
+						local newState = self.spec_cover.state + 1
+						if newState > #self.spec_cover.covers then
+							newState = 1
+						end
+						if not self:getIsNextCoverStateAllowed(newState) then
+							--print("CLOSE COVER")
+							self:setCoverState(0, true)
+						end
+					end
 				end
 
 				for i = 1, #spec.fillTrigger.triggers do
@@ -169,10 +190,33 @@ function BulkFill:onUpdate(dt, isActiveForInput, isSelected)
 						if trigger.sourceObject.numComponents == 1 then
 							local sourceObject = trigger.sourceObject
 							if sourceObject.spec_fillUnit.fillUnits[1].fillType == openCoverFillType then
-								sourceObject.spec_fillUnit.fillUnits[1].multiFillOpen = true
+								sourceObject.spec_fillUnit.fillUnits[1].multiFillCoverOpen = true
 							else
-								sourceObject.spec_fillUnit.fillUnits[1].multiFillOpen = false
-							end
+								sourceObject.spec_fillUnit.fillUnits[1].multiFillCoverOpen = false
+								
+								if i == bf.selectedIndex then
+									--print("OPEN COVER FOR SELECTED INDEX")
+									local requiredFillTypeIndex = 0
+									for j = 1, #self.spec_cover.covers do
+										if spec.fillUnits[j].fillLevel < spec.fillUnits[j].capacity then
+											local thisCoverFillType = next(spec.fillUnits[j].supportedFillTypes)
+											local requiredFillType = sourceObject.spec_fillUnit.fillUnits[1].fillType
+											if thisCoverFillType == requiredFillType then
+												requiredFillTypeIndex = j
+											end
+										end
+									end
+
+									if requiredFillTypeIndex ~= 0 then
+										local cover = self:getCoverByFillUnitIndex(requiredFillTypeIndex)
+										if cover ~= nil then
+											--print("OPENING COVER: " .. cover.index)
+											self:setCoverState(cover.index, true)
+											self.spec_cover.isStateSetAutomatically = true
+										end
+									end
+								end
+							end	
 						end
 					end
 				end
@@ -227,10 +271,10 @@ function BulkFill:onUpdate(dt, isActiveForInput, isSelected)
 							if sourceObject.isAddedToPhysics and not sourceObject.isDeleted then
 								local colour = {}
 								if i==bf.selectedIndex then
-									if sourceObject.spec_fillUnit.fillUnits[1].multiFillOpen == nil then
+									if sourceObject.spec_fillUnit.fillUnits[1].multiFillCoverOpen == nil then
 										colour = {1.0,1.0,0.1,1.0} -- YELLOW
 									else
-										if sourceObject.spec_fillUnit.fillUnits[1].multiFillOpen then
+										if sourceObject.spec_fillUnit.fillUnits[1].multiFillCoverOpen then
 											colour = {0.1,1.0,0.1,1.0} -- GREEN
 										else
 											colour = {1.0,0.1,0.1,1.0} -- RED
@@ -250,7 +294,6 @@ function BulkFill:onUpdate(dt, isActiveForInput, isSelected)
 					end
 				end
 			else
-				--bf.selectedIndex = 1
 				g_inputBinding:setActionEventTextVisibility(bf.cycleFwActionEventId, false)
 				g_inputBinding:setActionEventTextVisibility(bf.cycleBwActionEventId, false)
 				g_inputBinding:setActionEventActive(bf.cycleFwActionEventId, false)
@@ -320,13 +363,6 @@ function BulkFill.FillActivatableOnActivateObject(self, superFunc)
 	local spec = self.vehicle.spec_fillUnit
 	
 	if bf.isValid then
-		if #spec.fillUnits > 1 then
-			if spec.fillTrigger.triggers[bf.selectedIndex].sourceObject.spec_fillUnit.fillUnits[1].multiFillOpen == false then
-				--print("NOT A VALID FILL TYPE")
-				bf.isFilling = false
-				return superFunc(self)
-			end
-		end
 		if bf.selectedIndex ~= 1 then
 			--print("CHANGE FILL ORDER")
 			self.vehicle:changeFillOrder(false)
