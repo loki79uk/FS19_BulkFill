@@ -6,7 +6,7 @@
         <en>Bulk Fill</en>
         <de>Schüttgutbefüllung</de>
         <fr>Remplissage En Vrac</fr>
-		<ru>Массовое заполнение</ru>
+		<ru>Массовое Заполнение</ru>
     </title>
     <description>
 <en><![CDATA[Any refillable tools (seeders, sprayers or trailers) can now 'Bulk Fill' from multiple pallets or big-bags using only a single fill command, as long as there is another matching fill unit in range.
@@ -83,51 +83,51 @@ Caractéristiques:
 			<en>Bulk Fill: Toggle Enabled/Disabled</en>
 			<de>Schüttgutbefüllung: Umschalten Aktiviert/Deaktiviert</de>
 			<fr>Remplissage En Vrac: Activation/Désactivation Du Basculement</fr>
-			<ru>Массовое заполнение: вкл/откл</ru>
+			<ru>Массовое Заполнение: вкл/откл</ru>
 		</text>
 		<text name="action_BULK_FILL_ENABLED">
 			<en>Toggle Bulk Fill (Enabled)</en>
 			<de>Schüttgutfüllung Umschalten (Aktiviert)</de>
 			<fr>Basculer Le Remplissage En Vrac (Activé)</fr>
-			<ru>Массовое заполнение (включено)</ru>
+			<ru>Массовое Заполнение (включено)</ru>
 		</text>
 		<text name="action_BULK_FILL_DISABLED">
 			<en>Toggle Bulk Fill (Disabled)</en>
 			<de>Schüttgutfüllung Umschalten (Deaktiviert)</de>
 			<fr>Basculer Le Remplissage En Vrac (Handicapé)</fr>
-			<ru>Массовое заполнение (отключено)</ru>
+			<ru>Массовое Заполнение (отключено)</ru>
 		</text>
 		
 		<text name="input_TOGGLE_FILL_SELECT">
 			<en>Bulk Fill: Select Items (Enabled/Disabled)</en>
 			<de>Schüttgutbefüllung: Elemente auswählen (Aktiviert/Deaktiviert)</de>
 			<fr>Remplissage En Vrac: Sélectionner Les Éléments (Activés/Désactivés)</fr>
-			<ru>Массовое заполнение: Выбор элемента заполнения (вкл/откл)</ru>
+			<ru>Массовое Заполнение: Выбор элемента заполнения (вкл/откл)</ru>
 		</text>
 		<text name="action_FILL_SELECT_ENABLED">
 			<en>Toggle Select Fill Item (Enabled)</en>
 			<de>Umschalten Füllelement Auswählen (Aktiviert)</de>
 			<fr>Basculer L'élément De Remplissage (Activé)</fr>
-			<ru>Выбор элемента заполнения (включено)</ru>
+			<ru>Выбор Злемента заполнения (включено)</ru>
 		</text>
 		<text name="action_FILL_SELECT_DISABLED">
 			<en>Toggle Select Fill Item (Disabled)</en>
 			<de>Umschalten Füllelement Auswählen (Deaktiviert)</de>
 			<fr>Basculer L'Élément De Remplissage (Désactivé)</fr>
-			<ru>Выбор элемента заполнения (отключено)</ru>
+			<ru>Выбор Злемента заполнения (отключено)</ru>
 		</text>
 		
 		<text name="input_BULK_FILL_CYCLE_FW">
 			<en>Bulk Fill: Cycle Next Item</en>
 			<de>Schüttgutbefüllung: Zyklus Nächstes Element</de>
 			<fr>Remplissage En Vrac: Cycle Point Suivant</fr>
-			<ru>Массовое заполнение: Циклично следующий элемент</ru>
+			<ru>Массовое Заполнение: Циклично следующий элемент</ru>
 		</text>
 		<text name="input_BULK_FILL_CYCLE_BW">
 			<en>Bulk Fill: Cycle Previous Item</en>
 			<de>Schüttgutbefüllung: Zyklus Vorheriges Element</de>
 			<fr>Remplissage En Vrac: Cycle Point Précédent</fr>
-			<ru>Массовое заполнение: Циклично предыдущий элемент</ru>
+			<ru>Массовое Заполнение: Циклично предыдущий элемент</ru>
 		</text>
 		<text name="action_BULK_FILL_CYCLE_FW">
 			<en>Cycle Next Item</en>

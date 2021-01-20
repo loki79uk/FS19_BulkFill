@@ -4,9 +4,9 @@
 BulkFill = {};
 
 addModEventListener(BulkFill);
+source(g_currentModDirectory.."OpenCoverEvent.lua")
 source(g_currentModDirectory.."StopFillingEvent.lua")
-source(g_currentModDirectory.."ChangeFillOrderEvent.lua")
-source(g_currentModDirectory.."RemoveTriggerFromListEvent.lua")
+source(g_currentModDirectory.."StartFillingEvent.lua")
 
 function BulkFill.prerequisitesPresent(specializations)
 	return  SpecializationUtil.hasSpecialization(FillUnit, specializations) and
@@ -25,9 +25,9 @@ end
 
 function BulkFill.registerFunctions(vehicleType)
 	SpecializationUtil.registerFunction(vehicleType, "toggleBulkFill", BulkFill["toggleBulkFill"])
+	SpecializationUtil.registerFunction(vehicleType, "openCover", BulkFill["openCover"])
 	SpecializationUtil.registerFunction(vehicleType, "stopFilling", BulkFill["stopFilling"])
-	SpecializationUtil.registerFunction(vehicleType, "changeFillOrder", BulkFill["changeFillOrder"])
-	SpecializationUtil.registerFunction(vehicleType, "RemoveTriggerFromList", BulkFill["RemoveTriggerFromList"])
+	SpecializationUtil.registerFunction(vehicleType, "startFilling", BulkFill["startFilling"])
 	SpecializationUtil.registerFunction(vehicleType, "toggleFillSelection", BulkFill["toggleFillSelection"])
 	SpecializationUtil.registerFunction(vehicleType, "cycleFillTriggers", BulkFill["cycleFillTriggers"])
 end
@@ -47,13 +47,11 @@ function BulkFill:onLoad(savegame)
 		self.spec_bulkFill.isValid = false
 		--print("BULK FILL NOT LOADED: " .. self.typeDesc .. ", " .. self.typeName)
 	else
-		-- set saved bulk fill state or default to true
 		self.spec_bulkFill.isValid = true
 		--print("BULK FILL LOADED: " .. self.typeDesc .. ", " .. self.typeName)
 	end
 	
 	if savegame ~= nil and self.spec_bulkFill.isValid then
-		-- set saved bulk fill state or default to true
 		self.spec_bulkFill.isEnabled = Utils.getNoNil(getXMLBool(savegame.xmlFile, savegame.key..".bulkFill#isEnabled"), true)
 		self.spec_bulkFill.isSelectEnabled = Utils.getNoNil(getXMLBool(savegame.xmlFile, savegame.key..".bulkFill#isSelectEnabled"), true)
 	else
@@ -140,7 +138,7 @@ function BulkFill:onUpdate(dt, isActiveForInput, isSelected)
 		end
 		
 		if #spec.fillTrigger.triggers == 0 then
-			--print("NO TRIGGERS AVAILABLE")
+			-- --print("NO TRIGGERS AVAILABLE")
 			bf.selectedIndex = 1
 			g_inputBinding:setActionEventTextVisibility(bf.cycleFwActionEventId, false)
 			g_inputBinding:setActionEventTextVisibility(bf.cycleBwActionEventId, false)
@@ -149,11 +147,11 @@ function BulkFill:onUpdate(dt, isActiveForInput, isSelected)
 			
 			if spec.fillTrigger.currentTrigger ~= nil then
 				--print("STOP FILLING")
-				self:stopFilling(false)
+				self:stopFilling()
 			end
 			
 		else
-			--print("TRIGGERS AVAILABLE")
+			-- --print("TRIGGERS AVAILABLE")
 			bf.selectedIndex = MathUtil.clamp(bf.selectedIndex, 1, #spec.fillTrigger.triggers)
 			
 			if bf.isSelectEnabled and #spec.fillUnits>1 and self.spec_cover~=nil and
@@ -161,7 +159,7 @@ function BulkFill:onUpdate(dt, isActiveForInput, isSelected)
 				bf.lastSelectedIndex ~= bf.selectedIndex or
 				bf.lastNumberTriggers ~=# spec.fillTrigger.triggers)
 			then
-				--print("MULTIPLE FILL TYPES AVAILABLE")
+				-- --print("MULTIPLE FILL TYPES AVAILABLE")
 				bf.lastCoverOpen = self.spec_cover.state
 				bf.lastSelectedIndex = bf.selectedIndex
 				bf.lastNumberTriggers = #spec.fillTrigger.triggers
@@ -179,7 +177,7 @@ function BulkFill:onUpdate(dt, isActiveForInput, isSelected)
 						end
 						if not self:getIsNextCoverStateAllowed(newState) then
 							--print("CLOSE COVER")
-							self:setCoverState(0, true)
+							self:openCover(0)
 						end
 					end
 				end
@@ -190,29 +188,22 @@ function BulkFill:onUpdate(dt, isActiveForInput, isSelected)
 						if trigger.sourceObject.numComponents == 1 then
 							local sourceObject = trigger.sourceObject
 							if sourceObject.spec_fillUnit.fillUnits[1].fillType == openCoverFillType then
-								sourceObject.spec_fillUnit.fillUnits[1].multiFillCoverOpen = true
+								sourceObject.isValidType = true
 							else
-								sourceObject.spec_fillUnit.fillUnits[1].multiFillCoverOpen = false
+								sourceObject.isValidType = false
 								
 								if i == bf.selectedIndex then
-									--print("OPEN COVER FOR SELECTED INDEX")
-									local requiredFillTypeIndex = 0
 									for j = 1, #self.spec_cover.covers do
 										if spec.fillUnits[j].fillLevel < spec.fillUnits[j].capacity then
 											local thisCoverFillType = next(spec.fillUnits[j].supportedFillTypes)
 											local requiredFillType = sourceObject.spec_fillUnit.fillUnits[1].fillType
 											if thisCoverFillType == requiredFillType then
-												requiredFillTypeIndex = j
+												--print("OPEN COVER FOR SELECTED INDEX")
+												local cover = self:getCoverByFillUnitIndex(j)
+												if cover ~= nil then
+													self:openCover(cover.index)
+												end
 											end
-										end
-									end
-
-									if requiredFillTypeIndex ~= 0 then
-										local cover = self:getCoverByFillUnitIndex(requiredFillTypeIndex)
-										if cover ~= nil then
-											--print("OPENING COVER: " .. cover.index)
-											self:setCoverState(cover.index, true)
-											self.spec_cover.isStateSetAutomatically = true
 										end
 									end
 								end
@@ -220,31 +211,38 @@ function BulkFill:onUpdate(dt, isActiveForInput, isSelected)
 						end
 					end
 				end
-
 			end
 
 			if spec.fillTrigger.currentTrigger ~= nil then
 				if spec.fillTrigger.triggers[bf.selectedIndex]~=nil and spec.fillTrigger.triggers[bf.selectedIndex]~=spec.fillTrigger.currentTrigger then
-					--print("CURRENT TRIGGER HAS CHANGED")
+					-- --print("CURRENT TRIGGER HAS CHANGED")
 					if spec.fillTrigger.currentTrigger.sourceObject.isDeleted then
 						--print("DELETED: "..tostring(spec.fillTrigger.currentTrigger.sourceObject.id))
 						
 						if bf.isEnabled then
-
 							local nextFillType = spec.fillTrigger.triggers[bf.selectedIndex].sourceObject.spec_fillUnit.fillUnits[1].lastValidFillType
 							local previousFillType = spec.fillTrigger.currentTrigger.sourceObject.spec_fillUnit.fillUnits[1].lastValidFillType
 							if nextFillType == previousFillType then
-								--print("FILL FROM NEXT: "..tostring(spec.fillTrigger.triggers[1].sourceObject.id))
+								--print("FILL FROM NEXT: "..tostring(spec.fillTrigger.triggers[bf.selectedIndex].sourceObject.id))
+								if #spec.fillUnits==1 then
+									spec.fillTrigger.triggers[bf.selectedIndex].sourceObject.isValidType = nil
+								end
 								spec.fillTrigger.activatable:onActivateObject()
 							else
 								if #spec.fillTrigger.triggers > 0 then
 									--print("FILL TYPES ARE DIFFERENT")
-									self:RemoveTriggerFromList(1, false)
+									if #spec.fillUnits==1 then
+										spec.fillTrigger.triggers[bf.selectedIndex].sourceObject.isValidType = false
+									end
+									self:cycleFillTriggers('FW')
+									if bf.selectedIndex == 1 then
+										self:stopFilling()
+									end
 								end
 							end
 						else
 							--print("STOP FILLING 2")
-							self:stopFilling(false)
+							self:stopFilling()
 						end
 					end
 				end
@@ -271,10 +269,10 @@ function BulkFill:onUpdate(dt, isActiveForInput, isSelected)
 							if sourceObject.isAddedToPhysics and not sourceObject.isDeleted then
 								local colour = {}
 								if i==bf.selectedIndex then
-									if sourceObject.spec_fillUnit.fillUnits[1].multiFillCoverOpen == nil then
+									if sourceObject.isValidType == nil then
 										colour = {1.0,1.0,0.1,1.0} -- YELLOW
 									else
-										if sourceObject.spec_fillUnit.fillUnits[1].multiFillCoverOpen then
+										if sourceObject.isValidType then
 											colour = {0.1,1.0,0.1,1.0} -- GREEN
 										else
 											colour = {1.0,0.1,0.1,1.0} -- RED
@@ -315,12 +313,12 @@ function BulkFill:actionEventHandler(actionName, inputValue, callbackState, isAn
 end
 function BulkFill:toggleBulkFill()
 	if not self.spec_bulkFill.isEnabled then
-		--print("ENABLE")
+		--print("ENABLE BULK FILL")
 		self.spec_bulkFill.isEnabled = true
 		g_inputBinding:setActionEventText(self.spec_bulkFill.toggleActionEventId, g_i18n:getText("action_BULK_FILL_ENABLED"))
 		self.spec_bulkFill.isFilling = self.spec_fillUnit.fillTrigger.isFilling
 	else
-		--print("DISABLE")
+		--print("DISABLE BULK FILL")
 		self.spec_bulkFill.isEnabled = false
 		self.spec_bulkFill.isFilling = false
 		g_inputBinding:setActionEventText(self.spec_bulkFill.toggleActionEventId, g_i18n:getText("action_BULK_FILL_DISABLED"))
@@ -328,11 +326,11 @@ function BulkFill:toggleBulkFill()
 end
 function BulkFill:toggleFillSelection()
 	if not self.spec_bulkFill.isSelectEnabled then
-		--print("SHOW")
+		--print("ENABLE FILL SELECTION")
 		self.spec_bulkFill.isSelectEnabled = true
 		g_inputBinding:setActionEventText(self.spec_bulkFill.showActionEventId, g_i18n:getText("action_FILL_SELECT_ENABLED"))
 	else
-		--print("HIDE")
+		--print("DISABLE FILL SELECTION")
 		self.spec_bulkFill.isSelectEnabled = false
 		g_inputBinding:setActionEventText(self.spec_bulkFill.showActionEventId, g_i18n:getText("action_FILL_SELECT_DISABLED"))
 	end
@@ -363,13 +361,17 @@ function BulkFill.FillActivatableOnActivateObject(self, superFunc)
 	local spec = self.vehicle.spec_fillUnit
 	
 	if bf.isValid then
-		if bf.selectedIndex ~= 1 then
+		local id = spec.fillTrigger.triggers[bf.selectedIndex].sourceObject.id
+		local isValidType = spec.fillTrigger.triggers[bf.selectedIndex].sourceObject.isValidType
+		if isValidType == false then
+			--print("INCORRECT FILL TYPE")
+			return superFunc(self)
+		else
 			--print("CHANGE FILL ORDER")
-			self.vehicle:changeFillOrder(false)
-			bf.selectedIndex = 1
+			self.vehicle:startFilling(id)
 		end
 	end
-	
+
 	superFunc(self)
 	
 	if bf.isValid then
@@ -384,6 +386,22 @@ function BulkFill.FillActivatableOnActivateObject(self, superFunc)
 end
 
 -- NETWORK EVENTS:
+function BulkFill:openCover(myState, noEventSend)
+	--print("OPENING COVER: " .. myState)
+	self:setCoverState(myState)
+	self.spec_cover.isStateSetAutomatically = true
+
+	if noEventSend == nil or noEventSend == false then
+		if g_server ~= nil then
+			--print("g_server:broadcastEvent: openCover")
+			g_server:broadcastEvent(OpenCoverEvent:new(self, myID), nil, nil, self)
+		else
+			--print("g_client:sendEvent: openCover")
+			g_client:getServerConnection():sendEvent(OpenCoverEvent:new(self, myID))
+		end
+	end
+end
+
 function BulkFill:stopFilling(noEventSend)
 	self.spec_fillUnit.fillTrigger.currentTrigger = nil
 	self.spec_bulkFill.isFilling = false
@@ -399,37 +417,42 @@ function BulkFill:stopFilling(noEventSend)
 	end
 end
 
-function BulkFill:changeFillOrder(noEventSend)
-	local newIndex = self.spec_bulkFill.selectedIndex
+function BulkFill:startFilling(myID, noEventSend)
 	local spec = self.spec_fillUnit
-	table.insert(spec.fillTrigger.triggers, 1, spec.fillTrigger.triggers[newIndex])
-	table.remove(spec.fillTrigger.triggers, newIndex+1)
-	spec.fillTrigger.currentTrigger = spec.fillTrigger.triggers[1]
-	self.spec_bulkFill.selectedIndex = 1
+	local objectFound = false
 	
-	if noEventSend == nil or noEventSend == false then
-		if g_server ~= nil then
-			--print("g_server:broadcastEvent: changeFillOrder")
-			g_server:broadcastEvent(ChangeFillOrderEvent:new(self), nil, nil, self)
-		else
-			--print("g_client:sendEvent: changeFillOrder")
-			g_client:getServerConnection():sendEvent(ChangeFillOrderEvent:new(self))
+	for i = 1, #spec.fillTrigger.triggers do
+		if spec.fillTrigger.triggers[i].sourceObject.id == myID then
+			--print("index:" .. tostring(i) .. "  id:" .. tostring(spec.fillTrigger.triggers[i].sourceObject.id))
+			if i~=1 then
+				table.insert(spec.fillTrigger.triggers, 1, spec.fillTrigger.triggers[i])
+				table.remove(spec.fillTrigger.triggers, i+1)
+				spec.fillTrigger.currentTrigger = spec.fillTrigger.triggers[1]
+			end
+			objectFound = true
 		end
 	end
-end
 	
-function BulkFill:RemoveTriggerFromList(index, noEventSend)
-	--print("REMOVE FROM LIST: "..tostring(self.spec_fillUnit.fillTrigger.triggers[1].sourceObject.id))
-	table.remove(self.spec_fillUnit.fillTrigger.triggers, index)
-	self.spec_bulkFill.selectedIndex = 1
+	if not objectFound then
+		--print("Couldn't find the object with id: " .. tostring(myID))
+		if g_server ~= nil then
+			table.insert(spec.fillTrigger.triggers, 1, spec.fillTrigger.triggers[1])
+			spec.fillTrigger.triggers[1].sourceObject = g_server.objects[myID]
+		end
+	end
+	
+	if self.spec_bulkFill.selectedIndex ~= 1 then
+		--print("CHANGING SELECTED INDEX BACK TO 1")
+		self.spec_bulkFill.selectedIndex = 1
+	end
 	
 	if noEventSend == nil or noEventSend == false then
 		if g_server ~= nil then
-			--print("g_server:broadcastEvent: RemoveTriggerFromList")
-			g_server:broadcastEvent(RemoveTriggerFromListEvent:new(self, index), nil, nil, self)
+			--print("g_server:broadcastEvent: startFilling")
+			g_server:broadcastEvent(StartFillingEvent:new(self, myID), nil, nil, self)
 		else
-			--print("g_client:sendEvent: RemoveTriggerFromList")
-			g_client:getServerConnection():sendEvent(RemoveTriggerFromListEvent:new(self, index))
+			--print("g_client:sendEvent: startFilling")
+			g_client:getServerConnection():sendEvent(StartFillingEvent:new(self, myID))
 		end
 	end
 end
@@ -468,6 +491,7 @@ end
 
 function BulkFill:update(dt)
 	if not BulkFill.initialised then
+		--print("g_client: "..tostring(g_client))
 		--print("g_server: "..tostring(g_server))
 		--print("self.isServer: "..tostring(self.isServer))
 		BulkFill.initialised = true
