@@ -394,10 +394,10 @@ function BulkFill:openCover(myState, noEventSend)
 	if noEventSend == nil or noEventSend == false then
 		if g_server ~= nil then
 			--print("g_server:broadcastEvent: openCover")
-			g_server:broadcastEvent(OpenCoverEvent:new(self, myID), nil, nil, self)
+			g_server:broadcastEvent(OpenCoverEvent:new(self, myState), nil, nil, self)
 		else
 			--print("g_client:sendEvent: openCover")
-			g_client:getServerConnection():sendEvent(OpenCoverEvent:new(self, myID))
+			g_client:getServerConnection():sendEvent(OpenCoverEvent:new(self, myState))
 		end
 	end
 end

@@ -11,6 +11,7 @@ function OpenCoverEvent:new(myObject, myState)
 	local self = OpenCoverEvent:emptyNew()
 	self.object = myObject
 	self.state = myState
+
 	return self
 end
 
