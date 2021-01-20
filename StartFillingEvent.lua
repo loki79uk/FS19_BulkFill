@@ -32,10 +32,10 @@ end
 
 function StartFillingEvent:run(connection)
 	if not connection:getIsServer() then
-		print("StartFillingEvent: server")
+		--print("StartFillingEvent: server")
 		self.object:startFilling(self.id, true)
 	else
-		print("StartFillingEvent: client")
+		--print("StartFillingEvent: client")
 		self.object:startFilling(self.id, true)
 	end
 end
