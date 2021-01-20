@@ -36,10 +36,19 @@ end
 function BulkFill:onLoad(savegame)
 	self.isFilling = false
 	self.selectedIndex = 1
+	self.canFillFrom = {}
+	self.hasFillCovers = false
+	
+	if self.spec_cover ~= nil and self.spec_cover.hasCovers then
+		self.hasFillCovers = true
+	end
 
 	if 	self.typeName == 'tractor' or
 		self.typeName == 'locomotive' or
+		self.typeName == 'trainTrailer' or
 		self.typeName == 'trainTimberTrailer' or
+		self.typeDesc == 'auger wagon' or
+		self.typeName == 'receivingHopper' or
 		self.typeName == 'pallet' or
 		self.typeName == 'baler' or
 		self.typeName == 'tedder'
@@ -154,12 +163,13 @@ function BulkFill:onUpdate(dt, isActiveForInput, isSelected)
 			-- --print("TRIGGERS AVAILABLE")
 			bf.selectedIndex = MathUtil.clamp(bf.selectedIndex, 1, #spec.fillTrigger.triggers)
 			
-			if bf.isSelectEnabled and #spec.fillUnits>1 and self.spec_cover~=nil and
+			
+			if bf.isSelectEnabled and bf.hasFillCovers and #spec.fillUnits>1 and
 			   (bf.lastCoverOpen ~= self.spec_cover.state or
 				bf.lastSelectedIndex ~= bf.selectedIndex or
 				bf.lastNumberTriggers ~=# spec.fillTrigger.triggers)
 			then
-				-- --print("MULTIPLE FILL TYPES AVAILABLE")
+				-- --print("VEHICLE HAS COVERS WITH MULTIPLE FILL TYPES AVAILABLE")
 				bf.lastCoverOpen = self.spec_cover.state
 				bf.lastSelectedIndex = bf.selectedIndex
 				bf.lastNumberTriggers = #spec.fillTrigger.triggers
@@ -185,12 +195,12 @@ function BulkFill:onUpdate(dt, isActiveForInput, isSelected)
 				for i = 1, #spec.fillTrigger.triggers do
 					if spec.fillTrigger.triggers[i] ~= nil then
 						local trigger = spec.fillTrigger.triggers[i]
-						if trigger.sourceObject.numComponents == 1 then
+						if trigger.sourceObject ~= nil then
 							local sourceObject = trigger.sourceObject
 							if sourceObject.spec_fillUnit.fillUnits[1].fillType == openCoverFillType then
-								sourceObject.isValidType = true
+								bf.canFillFrom[sourceObject.id] = true
 							else
-								sourceObject.isValidType = false
+								bf.canFillFrom[sourceObject.id] = false
 								
 								if i == bf.selectedIndex then
 									for j = 1, #self.spec_cover.covers do
@@ -216,33 +226,37 @@ function BulkFill:onUpdate(dt, isActiveForInput, isSelected)
 			if spec.fillTrigger.currentTrigger ~= nil then
 				if spec.fillTrigger.triggers[bf.selectedIndex]~=nil and spec.fillTrigger.triggers[bf.selectedIndex]~=spec.fillTrigger.currentTrigger then
 					-- --print("CURRENT TRIGGER HAS CHANGED")
-					if spec.fillTrigger.currentTrigger.sourceObject.isDeleted then
-						--print("DELETED: "..tostring(spec.fillTrigger.currentTrigger.sourceObject.id))
-						
-						if bf.isEnabled then
-							local nextFillType = spec.fillTrigger.triggers[bf.selectedIndex].sourceObject.spec_fillUnit.fillUnits[1].lastValidFillType
-							local previousFillType = spec.fillTrigger.currentTrigger.sourceObject.spec_fillUnit.fillUnits[1].lastValidFillType
-							if nextFillType == previousFillType then
-								--print("FILL FROM NEXT: "..tostring(spec.fillTrigger.triggers[bf.selectedIndex].sourceObject.id))
-								if #spec.fillUnits==1 then
-									spec.fillTrigger.triggers[bf.selectedIndex].sourceObject.isValidType = nil
-								end
-								spec.fillTrigger.activatable:onActivateObject()
-							else
-								if #spec.fillTrigger.triggers > 0 then
-									--print("FILL TYPES ARE DIFFERENT")
+					if spec.fillTrigger.currentTrigger.sourceObject ~= nil then
+						if spec.fillTrigger.currentTrigger.sourceObject.isDeleted then
+							--print("DELETED: "..tostring(spec.fillTrigger.currentTrigger.sourceObject.id))
+							
+							if bf.isEnabled then
+								local nextFillType = spec.fillTrigger.triggers[bf.selectedIndex].sourceObject.spec_fillUnit.fillUnits[1].lastValidFillType
+								local previousFillType = spec.fillTrigger.currentTrigger.sourceObject.spec_fillUnit.fillUnits[1].lastValidFillType
+								if nextFillType == previousFillType then
+									--print("FILL FROM NEXT: "..tostring(spec.fillTrigger.triggers[bf.selectedIndex].sourceObject.id))
 									if #spec.fillUnits==1 then
-										spec.fillTrigger.triggers[bf.selectedIndex].sourceObject.isValidType = false
+										local sourceObject = spec.fillTrigger.triggers[bf.selectedIndex].sourceObject
+										bf.canFillFrom[sourceObject.id] = nil
 									end
-									self:cycleFillTriggers('FW')
-									if bf.selectedIndex == 1 then
-										self:stopFilling()
+									spec.fillTrigger.activatable:onActivateObject()
+								else
+									if #spec.fillTrigger.triggers > 0 then
+										--print("FILL TYPES ARE DIFFERENT")
+										if #spec.fillUnits==1 then
+											local sourceObject = spec.fillTrigger.triggers[bf.selectedIndex].sourceObject
+											bf.canFillFrom[sourceObject.id] = false
+										end
+										self:cycleFillTriggers('FW')
+										if bf.selectedIndex == 1 then
+											self:stopFilling()
+										end
 									end
 								end
+							else
+								--print("STOP FILLING 2")
+								self:stopFilling()
 							end
-						else
-							--print("STOP FILLING 2")
-							self:stopFilling()
 						end
 					end
 				end
@@ -264,29 +278,31 @@ function BulkFill:onUpdate(dt, isActiveForInput, isSelected)
 				for i = 1, #spec.fillTrigger.triggers do
 					if spec.fillTrigger.triggers[i] ~= nil then
 						local trigger = spec.fillTrigger.triggers[i]
-						if trigger.sourceObject.numComponents == 1 then
-							local sourceObject = trigger.sourceObject
-							if sourceObject.isAddedToPhysics and not sourceObject.isDeleted then
-								local colour = {}
-								if i==bf.selectedIndex then
-									if sourceObject.isValidType == nil then
-										colour = {1.0,1.0,0.1,1.0} -- YELLOW
-									else
-										if sourceObject.isValidType then
-											colour = {0.1,1.0,0.1,1.0} -- GREEN
+						if trigger.sourceObject ~= nil then
+							if trigger.sourceObject.numComponents == 1 then
+								local sourceObject = trigger.sourceObject
+								if sourceObject.isAddedToPhysics and not sourceObject.isDeleted then
+									local colour = {}
+									if i==bf.selectedIndex then
+										if bf.canFillFrom[sourceObject.id] == nil then
+											colour = {1.0,1.0,0.1,1.0} -- YELLOW
 										else
-											colour = {1.0,0.1,0.1,1.0} -- RED
+											if bf.canFillFrom[sourceObject.id] then
+												colour = {0.1,1.0,0.1,1.0} -- GREEN
+											else
+												colour = {1.0,0.1,0.1,1.0} -- RED
+											end
 										end
+									else
+										colour = {1.0,1.0,1.0,0.3}
 									end
-								else
-									colour = {1.0,1.0,1.0,0.3}
+									local fillLevelBuffer = {}
+									sourceObject:getFillLevelInformation(fillLevelBuffer)
+									local fillLevelInformation = fillLevelBuffer[1]
+									local fillLevel = string.format("%.0f", fillLevelInformation.fillLevel)
+									local x, y, z = getWorldTranslation(sourceObject.rootNode)
+									Utils.renderTextAtWorldPosition(x, y+1, z, "#"..i.."\n[ "..fillLevel.." ]", getCorrectTextSize(0.02), 0, colour)
 								end
-								local fillLevelBuffer = {}
-								sourceObject:getFillLevelInformation(fillLevelBuffer)
-								local fillLevelInformation = fillLevelBuffer[1]
-								local fillLevel = string.format("%.0f", fillLevelInformation.fillLevel)
-								local x, y, z = getWorldTranslation(sourceObject.rootNode)
-								Utils.renderTextAtWorldPosition(x, y+1, z, "#"..i.."\n[ "..fillLevel.." ]", getCorrectTextSize(0.02), 0, colour)
 							end
 						end
 					end
@@ -361,14 +377,15 @@ function BulkFill.FillActivatableOnActivateObject(self, superFunc)
 	local spec = self.vehicle.spec_fillUnit
 	
 	if bf.isValid then
-		local id = spec.fillTrigger.triggers[bf.selectedIndex].sourceObject.id
-		local isValidType = spec.fillTrigger.triggers[bf.selectedIndex].sourceObject.isValidType
-		if isValidType == false then
-			--print("INCORRECT FILL TYPE")
-			return superFunc(self)
-		else
-			--print("CHANGE FILL ORDER")
-			self.vehicle:startFilling(id)
+		local sourceObject = spec.fillTrigger.triggers[bf.selectedIndex].sourceObject
+		if sourceObject ~= nil then
+			if bf.canFillFrom[sourceObject.id] == false then
+				--print("INCORRECT FILL TYPE")
+				return superFunc(self)
+			else
+				--print("CHANGE FILL ORDER")
+				self.vehicle:startFilling(sourceObject.id)
+			end
 		end
 	end
 
@@ -422,14 +439,16 @@ function BulkFill:startFilling(myID, noEventSend)
 	local objectFound = false
 	
 	for i = 1, #spec.fillTrigger.triggers do
-		if spec.fillTrigger.triggers[i].sourceObject.id == myID then
-			--print("index:" .. tostring(i) .. "  id:" .. tostring(spec.fillTrigger.triggers[i].sourceObject.id))
-			if i~=1 then
-				table.insert(spec.fillTrigger.triggers, 1, spec.fillTrigger.triggers[i])
-				table.remove(spec.fillTrigger.triggers, i+1)
-				spec.fillTrigger.currentTrigger = spec.fillTrigger.triggers[1]
+		if spec.fillTrigger.triggers[i].sourceObject ~= nil then
+			if spec.fillTrigger.triggers[i].sourceObject.id == myID then
+				--print("index:" .. tostring(i) .. "  id:" .. tostring(spec.fillTrigger.triggers[i].sourceObject.id))
+				if i~=1 then
+					table.insert(spec.fillTrigger.triggers, 1, spec.fillTrigger.triggers[i])
+					table.remove(spec.fillTrigger.triggers, i+1)
+					spec.fillTrigger.currentTrigger = spec.fillTrigger.triggers[1]
+				end
+				objectFound = true
 			end
-			objectFound = true
 		end
 	end
 	
