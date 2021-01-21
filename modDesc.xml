@@ -112,13 +112,13 @@ Caractéristiques:
 			<en>Toggle Select Fill Item (Enabled)</en>
 			<de>Umschalten Füllelement Auswählen (Aktiviert)</de>
 			<fr>Basculer L'élément De Remplissage (Activé)</fr>
-			<ru>Выбор Злемента заполнения (включено)</ru>
+			<ru>Выбор элемента заполнения (включено)</ru>
 		</text>
 		<text name="action_FILL_SELECT_DISABLED">
 			<en>Toggle Select Fill Item (Disabled)</en>
 			<de>Umschalten Füllelement Auswählen (Deaktiviert)</de>
 			<fr>Basculer L'Élément De Remplissage (Désactivé)</fr>
-			<ru>Выбор Злемента заполнения (отключено)</ru>
+			<ru>Выбор элемента заполнения (отключено)</ru>
 		</text>
 		
 		<text name="input_BULK_FILL_CYCLE_FW">
