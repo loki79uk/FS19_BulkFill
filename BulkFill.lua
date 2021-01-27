@@ -479,11 +479,13 @@ end
 -- STOP FILLING WHEN UNLOADING
 function BulkFill.FillUnitActionEventUnload(self, actionName, inputValue, callbackState, isAnalog)
 	--print("UNLOADING")
-	local spec = self.spec_fillUnit
-	if spec.fillTrigger.isFilling then
-		--print("CANCEL LOADING")
-		self:setFillUnitIsFilling(false)
-		self.spec_bulkFill.isFilling = false
+	if self.spec_bulkFill ~= nil then
+		local spec = self.spec_fillUnit
+		if spec.fillTrigger.isFilling then
+			--print("CANCEL LOADING")
+			self:setFillUnitIsFilling(false)
+			self.spec_bulkFill.isFilling = false
+		end
 	end
 end
 
