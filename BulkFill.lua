@@ -376,7 +376,7 @@ function BulkFill.FillActivatableOnActivateObject(self, superFunc)
 	local bf = self.vehicle.spec_bulkFill
 	local spec = self.vehicle.spec_fillUnit
 	
-	if bf.isValid then
+	if bf~=nil and bf.isValid then
 		local sourceObject = spec.fillTrigger.triggers[bf.selectedIndex].sourceObject
 		if sourceObject ~= nil then
 			if bf.canFillFrom[sourceObject.id] == false then
@@ -391,7 +391,7 @@ function BulkFill.FillActivatableOnActivateObject(self, superFunc)
 
 	superFunc(self)
 	
-	if bf.isValid then
+	if bf~=nil and bf.isValid then
 		if spec.fillTrigger.isFilling then
 			--print("START FILLING: " .. tostring(spec.fillTrigger.currentTrigger.sourceObject.id))
 			bf.isFilling = true
