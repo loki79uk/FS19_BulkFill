@@ -34,13 +34,15 @@ end
 
 -- SAVE AND RETRIEVE TOGGLED STATE TO/FROM VEHICLES.XML
 function BulkFill:onLoad(savegame)
-	self.isFilling = false
-	self.selectedIndex = 1
-	self.canFillFrom = {}
-	self.hasFillCovers = false
+	self.spec_bulkFill.isFilling = false
+	self.spec_bulkFill.selectedIndex = 1
+	self.spec_bulkFill.canFillFrom = {}
+	self.spec_bulkFill.hasFillCovers = false
+	self.spec_bulkFill.isEnabled = false
+	self.spec_bulkFill.isSelectEnabled = false
 	
 	if self.spec_cover ~= nil and self.spec_cover.hasCovers then
-		self.hasFillCovers = true
+		self.spec_bulkFill.hasFillCovers = true
 	end
 
 	if 	self.typeName == 'tractor' or
@@ -54,42 +56,40 @@ function BulkFill:onLoad(savegame)
 		self.typeName == 'tedder'
 	then
 		self.spec_bulkFill.isValid = false
-		--print("BULK FILL NOT LOADED: " .. self.typeDesc .. ", " .. self.typeName)
 	else
 		self.spec_bulkFill.isValid = true
-		--print("BULK FILL LOADED: " .. self.typeDesc .. ", " .. self.typeName)
 	end
-	
-	if savegame ~= nil and self.spec_bulkFill.isValid then
-		self.spec_bulkFill.isEnabled = Utils.getNoNil(getXMLBool(savegame.xmlFile, savegame.key..".bulkFill#isEnabled"), true)
-		self.spec_bulkFill.isSelectEnabled = Utils.getNoNil(getXMLBool(savegame.xmlFile, savegame.key..".bulkFill#isSelectEnabled"), true)
-	else
-		self.spec_bulkFill.isEnabled = true
-		self.spec_bulkFill.isSelectEnabled = true
+
+	if self.spec_bulkFill.isValid then
+		if savegame ~= nil then
+			self.spec_bulkFill.isEnabled = Utils.getNoNil(getXMLBool(savegame.xmlFile, savegame.key..".bulkFill#isEnabled"), true)
+			self.spec_bulkFill.isSelectEnabled = Utils.getNoNil(getXMLBool(savegame.xmlFile, savegame.key..".bulkFill#isSelectEnabled"), true)
+		else
+			self.spec_bulkFill.isEnabled = true
+			self.spec_bulkFill.isSelectEnabled = true
+		end
 	end
 end
 function BulkFill:saveToXMLFile(xmlFile, key, usedModNames)
 	if self.spec_bulkFill.isValid then
-		setXMLBool(xmlFile, key ..".bulkFill#isEnabled", self.spec_bulkFill.isEnabled)
-		setXMLBool(xmlFile, key ..".bulkFill#isSelectEnabled", self.spec_bulkFill.isSelectEnabled)
+		setXMLBool(xmlFile, key .."#isEnabled", self.spec_bulkFill.isEnabled)
+		setXMLBool(xmlFile, key .."#isSelectEnabled", self.spec_bulkFill.isSelectEnabled)
 	end
 end
 
 -- MULTIPLAYER
 function BulkFill:onReadStream(streamId, connection)
 	if connection:getIsServer() then
-		local spec = self.spec_bulkFill
-		if spec.isValid then
-			spec.isFilling = streamReadBool(streamId)
+		if self.spec_bulkFill.isValid then
+			self.spec_bulkFill.isFilling = streamReadBool(streamId)
 		end
 	end
 end
 
 function BulkFill:onWriteStream(streamId, connection)
 	if not connection:getIsServer() then
-		local spec = self.spec_bulkFill
-		if spec.isValid then
-			streamWriteBool(streamId, spec.isFilling)
+		if self.spec_bulkFill.isValid then
+			streamWriteBool(streamId, self.spec_bulkFill.isFilling)
 		end
 	end
 end
