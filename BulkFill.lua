@@ -36,6 +36,7 @@ end
 function BulkFill:onLoad(savegame)
 	self.spec_bulkFill.isFilling = false
 	self.spec_bulkFill.selectedIndex = 1
+	self.spec_bulkFill.lastRequestedIndex = 0
 	self.spec_bulkFill.canFillFrom = {}
 	self.spec_bulkFill.hasFillCovers = false
 	self.spec_bulkFill.isEnabled = false
@@ -141,7 +142,7 @@ function BulkFill:onUpdate(dt, isActiveForInput, isSelected)
 		
 		-- I cannot find where this happens: when a container stops filling due to becoming full
 		if self.spec_bulkFill.isFilling ~= self.spec_fillUnit.fillTrigger.isFilling then
-			--print("isFilling was changed without us knowing..")
+			--print("'isFilling' was changed without us knowing..")
 			self.spec_bulkFill.isFilling = self.spec_fillUnit.fillTrigger.isFilling
 			bf.lastNumberTriggers = 0 -- change this to trigger 'MULTIPLE FILL TYPES AVAILABLE'
 		end
@@ -162,8 +163,7 @@ function BulkFill:onUpdate(dt, isActiveForInput, isSelected)
 		else
 			-- --print("TRIGGERS AVAILABLE")
 			bf.selectedIndex = MathUtil.clamp(bf.selectedIndex, 1, #spec.fillTrigger.triggers)
-			
-			
+
 			if bf.isSelectEnabled and bf.hasFillCovers and #spec.fillUnits>1 and
 			   (bf.lastCoverOpen ~= self.spec_cover.state or
 				bf.lastSelectedIndex ~= bf.selectedIndex or
@@ -383,7 +383,7 @@ function BulkFill.FillActivatableOnActivateObject(self, superFunc)
 				--print("INCORRECT FILL TYPE")
 				return superFunc(self)
 			else
-				--print("CHANGE FILL ORDER")
+				--print("startFilling("..tostring(sourceObject.id)..")")
 				self.vehicle:startFilling(sourceObject.id)
 			end
 		end
@@ -393,10 +393,10 @@ function BulkFill.FillActivatableOnActivateObject(self, superFunc)
 	
 	if bf~=nil and bf.isValid then
 		if spec.fillTrigger.isFilling then
-			--print("START FILLING: " .. tostring(spec.fillTrigger.currentTrigger.sourceObject.id))
+			--print("STARTED FILLING " .. tostring(spec.fillTrigger.currentTrigger.sourceObject.id))
 			bf.isFilling = true
 		else
-			--print("CANCEL FILLING")
+			--print("CANCELED FILLING")
 			bf.isFilling = false
 		end
 	end
@@ -422,6 +422,7 @@ end
 function BulkFill:stopFilling(noEventSend)
 	self.spec_fillUnit.fillTrigger.currentTrigger = nil
 	self.spec_bulkFill.isFilling = false
+	self.spec_bulkFill.lastRequestedIndex = 0
 	
 	if noEventSend == nil or noEventSend == false then
 		if g_server ~= nil then
@@ -438,60 +439,81 @@ function BulkFill:startFilling(myID, noEventSend)
 	local spec = self.spec_fillUnit
 	local objectFound = false
 	
-	for i = 1, #spec.fillTrigger.triggers do
-		if spec.fillTrigger.triggers[i].sourceObject ~= nil then
-			if spec.fillTrigger.triggers[i].sourceObject.id == myID then
-				--print("index:" .. tostring(i) .. "  id:" .. tostring(spec.fillTrigger.triggers[i].sourceObject.id))
-				if i~=1 then
-					table.insert(spec.fillTrigger.triggers, 1, spec.fillTrigger.triggers[i])
-					table.remove(spec.fillTrigger.triggers, i+1)
-					spec.fillTrigger.currentTrigger = spec.fillTrigger.triggers[1]
-				end
-				objectFound = true
-			end
-		end
-	end
-	
-	if not objectFound then
-		--print("Couldn't find the object with id: " .. tostring(myID))
-		if g_server ~= nil then
-			table.insert(spec.fillTrigger.triggers, 1, spec.fillTrigger.triggers[1])
-			spec.fillTrigger.triggers[1].sourceObject = g_server.objects[myID]
-		end
-	end
-	
 	if self.spec_bulkFill.selectedIndex ~= 1 then
 		--print("CHANGING SELECTED INDEX BACK TO 1")
 		self.spec_bulkFill.selectedIndex = 1
 	end
 	
+	for i = 1, #spec.fillTrigger.triggers do
+		if spec.fillTrigger.triggers[i].sourceObject ~= nil then
+			if spec.fillTrigger.triggers[i].sourceObject.id == myID then
+				objectFound = true
+				print("index:" .. tostring(i) .. "  id:" .. tostring(spec.fillTrigger.triggers[i].sourceObject.id))
+				if i~=1 then
+					table.insert(spec.fillTrigger.triggers, 1, spec.fillTrigger.triggers[i])
+					table.remove(spec.fillTrigger.triggers, i+1)
+					spec.fillTrigger.currentTrigger = spec.fillTrigger.triggers[1]
+				end
+				break
+			end
+		end
+	end
+	
+	if not objectFound then
+
+		print("Couldn't find object with id: " .. tostring(myID))
+		return
+		
+		-- print("FULL SERVER TABLE:")
+		-- DebugUtil.printTableRecursively(g_server, " ", 0, 1);
+		
+		-- if g_server ~= nil then
+			-- if g_server.objects[myID] ~= nil then
+				-- print("g_server - inserting new object")
+				-- table.insert(spec.fillTrigger.triggers, 1, spec.fillTrigger.triggers[1])
+				-- spec.fillTrigger.triggers[1].sourceObject = g_server.objects[myID]
+			-- else
+				-- print("Couldn't find object with id: " .. tostring(myID))
+				-- print("...spec_bulkFill.isFilling: " .. tostring(self.spec_bulkFill.isFilling))
+				-- print("...spec.fillTrigger.isFilling: " .. tostring(spec.fillTrigger.isFilling))
+				-- return
+			-- end
+		-- end
+		-- return
+	end
+	
 	if noEventSend == nil or noEventSend == false then
-		if g_server ~= nil then
-			--print("g_server:broadcastEvent: startFilling")
-			g_server:broadcastEvent(StartFillingEvent:new(self, myID), nil, nil, self)
-		else
-			--print("g_client:sendEvent: startFilling")
-			g_client:getServerConnection():sendEvent(StartFillingEvent:new(self, myID))
+		-- ONLY SEND REQUEST ONCE PER OBJECT ID
+		if self.spec_bulkFill.lastRequestedIndex ~= myID then
+			self.spec_bulkFill.lastRequestedIndex = myID
+			if g_server ~= nil then
+				--print("g_server:broadcastEvent: startFilling")
+				g_server:broadcastEvent(StartFillingEvent:new(self, myID), nil, nil, self)
+			else
+				--print("g_client:sendEvent: startFilling")
+				g_client:getServerConnection():sendEvent(StartFillingEvent:new(self, myID))
+			end
 		end
 	end
 end
 
 -- STOP FILLING WHEN UNLOADING
 function BulkFill.FillUnitActionEventUnload(self, actionName, inputValue, callbackState, isAnalog)
-	--print("UNLOADING")
+	--print("UNLOADING " .. tostring(self.id))
 	if self.spec_bulkFill ~= nil then
 		local spec = self.spec_fillUnit
 		if spec.fillTrigger.isFilling then
-			--print("CANCEL LOADING")
+			print("CANCEL LOADING")
 			self:setFillUnitIsFilling(false)
 			self.spec_bulkFill.isFilling = false
+			self.spec_bulkFill.lastRequestedIndex = 0
 		end
 	end
 end
 
 -- BULK FILL FUNCTIONS
 function BulkFill:loadMap(name)
-	--print("Load Mod: 'BULK FILL'")
+	print("Load Mod: 'BULK FILL' - test version 0006")
 	FillActivatable.onActivateObject = Utils.overwrittenFunction(FillActivatable.onActivateObject, BulkFill.FillActivatableOnActivateObject)
 	FillUnit.actionEventUnload = Utils.prependedFunction(FillUnit.actionEventUnload, BulkFill.FillUnitActionEventUnload)
 
@@ -512,9 +534,25 @@ end
 
 function BulkFill:update(dt)
 	if not BulkFill.initialised then
-		--print("g_client: "..tostring(g_client))
-		--print("g_server: "..tostring(g_server))
-		--print("self.isServer: "..tostring(self.isServer))
+		print("g_client: "..tostring(g_client))
+		print("g_server: "..tostring(g_server))
+		print("player: "..tostring(g_currentMission.player))
+		print("farmId: "..tostring(g_currentMission.player.farmId) ) 
+		print("ownerFarmId: "..tostring(g_currentMission.player.ownerFarmId) ) 
+		print("playerName: "..tostring(g_currentMission.player.visualInformation.playerName) ) 
+		
+		if g_server ~= nil then
+			-- print("")
+			-- print("FULL PLAYER TABLE:")
+			-- DebugUtil.printTableRecursively(g_currentMission.player, " ", 0, 1);
+			-- print("")
+			-- print("FULL SERVER TABLE:")
+			-- DebugUtil.printTableRecursively(g_server, " ", 0, 1);
+			-- print("")
+			-- print("ALL SERVER OBJECTS:")
+			-- DebugUtil.printTableRecursively(g_server.objects, " ", 0, 1);
+		end
+
 		BulkFill.initialised = true
 	end
 end
