@@ -7,6 +7,7 @@
         <de>Schüttgutbefüllung</de>
         <fr>Remplissage En Vrac</fr>
 		<ru>Массовое Заполнение</ru>
+	<pl>Hurtowe napełnianie</pl>
     </title>
     <description>
 <en><![CDATA[Any refillable tools (seeders, sprayers or trailers) can now 'Bulk Fill' from multiple pallets or big-bags using only a single fill command, as long as there is another matching fill unit in range.
@@ -53,14 +54,25 @@ Caractéristiques:
 - Крышки автоматически открываются на таких инструментах, как сеялки с баками для удобрений
 ]]>
 </ru>
+<pl><![CDATA[Wszystkie narzędzia które można napełniać (siewniki, rozsiewacze nawozu czy przyczepy) mogą być 'Napełniane Hurtowo' z wielu palet lub big-bagów za pomocą jednego polecenia napełnienia, jeśli tylko w zasięgu znajduje się inne źródło z tym samym typem produktu.
+
+Funkcjonalności:
+- Bulk Fill pozwala na ciągłe napełnianie z wielu palet lub big-bagów
+- Funkcjonalność może być przełączana używając 'Insert' jeśli jest potrzeba napełniania tylko z jednego źródła
+- Status jest zapisywany niezaleźnie dla każdego narzędzia podczas zapisywania gry
+- Poziomy napełnienia i kolejność dostępnych źródeł napełniania są wyświetlane w odpowiednich miejscach
+- Istnieje też możliwość wybrania obiektu z którego będzie rozpoczęte napełnianie
+- Pokrywy i plandeki będą otwierane automatycznie w narzędziach typu siewniki czy rozsiewacze nawozu
+]]>
+</pl>
     </description>
-	
+
 	<multiplayer supported="true" />
 	<iconFilename>modIcon.dds</iconFilename>
 	<extraSourceFiles>
 		<sourceFile filename="register.lua" />
 	</extraSourceFiles>
-	
+
 	<actions>
 		<action name="TOGGLE_BULK_FILL" category="VEHICLE"/>
 		<action name="TOGGLE_FILL_SELECT" category="VEHICLE"/>
@@ -80,71 +92,81 @@ Caractéristiques:
 		<actionBinding action="BULK_FILL_CYCLE_BW" >
 			<binding device="KB_MOUSE_DEFAULT" input="KEY_leftbracket" />
 		</actionBinding>
-	</inputBinding>	
-	
+	</inputBinding>
+
 	<l10n>
 		<text name="input_TOGGLE_BULK_FILL">
 			<en>Bulk Fill: Toggle Enabled/Disabled</en>
 			<de>Schüttgutbefüllung: Umschalten Aktiviert/Deaktiviert</de>
 			<fr>Remplissage En Vrac: Activation/Désactivation Du Basculement</fr>
 			<ru>Массовое Заполнение: вкл/откл</ru>
+			<pl>Hurtowe napełnianie: Przełacz Włącz/Wyłącz</pl>
 		</text>
 		<text name="action_BULK_FILL_ENABLED">
 			<en>Toggle Bulk Fill (Enabled)</en>
 			<de>Schüttgutfüllung Umschalten (Aktiviert)</de>
 			<fr>Basculer Le Remplissage En Vrac (Activé)</fr>
 			<ru>Массовое Заполнение (включено)</ru>
+			<pl>Przełącz hurtowe napełnianie (Włączone)</pl>
 		</text>
 		<text name="action_BULK_FILL_DISABLED">
 			<en>Toggle Bulk Fill (Disabled)</en>
 			<de>Schüttgutfüllung Umschalten (Deaktiviert)</de>
 			<fr>Basculer Le Remplissage En Vrac (Handicapé)</fr>
 			<ru>Массовое Заполнение (отключено)</ru>
+			<pl>Przełącz hurtowe napełnianie (Wyłączone)</pl>
 		</text>
-		
+
 		<text name="input_TOGGLE_FILL_SELECT">
 			<en>Bulk Fill: Select Items (Enabled/Disabled)</en>
 			<de>Schüttgutbefüllung: Elemente auswählen (Aktiviert/Deaktiviert)</de>
 			<fr>Remplissage En Vrac: Sélectionner Les Éléments (Activés/Désactivés)</fr>
 			<ru>Массовое Заполнение: Выбор элемента заполнения (вкл/откл)</ru>
+			<pl>Hurtowe napełnianie: Wybierz obiekty (Włącz/Wyłącz)</pl>
 		</text>
 		<text name="action_FILL_SELECT_ENABLED">
 			<en>Toggle Select Fill Item (Enabled)</en>
 			<de>Umschalten Füllelement Auswählen (Aktiviert)</de>
 			<fr>Basculer L'élément De Remplissage (Activé)</fr>
 			<ru>Выбор элемента заполнения (включено)</ru>
+			<pl>Przełącz wybór obiektów do napełniania (Włączone)</pl>
 		</text>
 		<text name="action_FILL_SELECT_DISABLED">
 			<en>Toggle Select Fill Item (Disabled)</en>
 			<de>Umschalten Füllelement Auswählen (Deaktiviert)</de>
 			<fr>Basculer L'Élément De Remplissage (Désactivé)</fr>
 			<ru>Выбор элемента заполнения (отключено)</ru>
+			<pl>Przełącz wybór obiektów do napełniania (Wyłączone)</pl>
 		</text>
-		
+
 		<text name="input_BULK_FILL_CYCLE_FW">
 			<en>Bulk Fill: Cycle Next Item</en>
 			<de>Schüttgutbefüllung: Zyklus Nächstes Element</de>
 			<fr>Remplissage En Vrac: Cycle Point Suivant</fr>
 			<ru>Массовое Заполнение: Циклично следующий элемент</ru>
+			<pl>Hurtowe napełnianie: Następny obiekt</pl>
 		</text>
 		<text name="input_BULK_FILL_CYCLE_BW">
 			<en>Bulk Fill: Cycle Previous Item</en>
 			<de>Schüttgutbefüllung: Zyklus Vorheriges Element</de>
 			<fr>Remplissage En Vrac: Cycle Point Précédent</fr>
 			<ru>Массовое Заполнение: Циклично предыдущий элемент</ru>
+			<pl>Hurtowe napełnianie: Poprzedni obiekt</pl>
 		</text>
 		<text name="action_BULK_FILL_CYCLE_FW">
 			<en>Cycle Next Item</en>
 			<de>Zyklus Nächstes Element</de>
 			<fr>Cycle Point Suivant</fr>
 			<ru>Циклично следующий элемент</ru>
+			<pl>Następny obiekt</pl>
 		</text>
 		<text name="action_BULK_FILL_CYCLE_BW">
 			<en>Cycle Previous Item</en>
 			<de>Zyklus Vorheriges Element</de>
 			<fr>Cycle Point Précédent</fr>
 			<ru>Циклично предыдущий элемент</ru>
+			<pl>Poprzedni obiekt</pl>
 		</text>
-		
+
 	</l10n>
 </modDesc>
